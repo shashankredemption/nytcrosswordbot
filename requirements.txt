@@ -1,0 +1,10 @@
+aenum==2.2.3
+attrs==19.3.0
+beautifulsoup4==4.8.1
+certifi==2019.11.28
+chardet==3.0.4
+fbchat==1.8.3
+idna==2.8
+requests==2.22.0
+soupsieve==1.9.5
+urllib3==1.25.7
