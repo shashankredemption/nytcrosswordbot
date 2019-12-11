@@ -25,14 +25,19 @@ def idiot_alex(dictionary):
     alex_dict = {k: v for k, v in dictionary.items() if k.lower().startswith('alex')}
     return max(alex_dict, key=alex_dict.get)
 
+def did_tony_win(dictionary):
+    return dictionary['Anthony Ma'] == min(list(dictionary.values()))
+
 def build_output(dictionary):
     output = ''
     count = 1
-    for k, v in sorted(dictionary.items(), key=lambda item: item[1]): 
-        output += f'{count} : {k} @ {format_time(v)} \n'
+    sorted_times = sorted(dictionary.items(), key=lambda item: item[1])
+    for k, v in sorted_times:
+        output += f'{count}. {k} @ {format_time(v)} \n'
         count += 1
     output += '\n'
     output += f'Idiot Alex: {idiot_alex(dictionary)} \n'
+    output += f'Did Tony Ma Win? {"Yes :(" if did_tony_win(dictionary) else "NO! :D"} \n'
     return output
 
 messages = client.fetchThreadMessages(os.environ['THREAD_ID'], limit=150)
