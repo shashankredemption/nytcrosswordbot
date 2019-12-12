@@ -26,10 +26,10 @@ def idiot_alex(dictionary):
     return max(alex_dict, key=alex_dict.get)
 
 def did_tony_win(dictionary):
-    return dictionary['Anthony Ma'] == min(list(dictionary.values()))
+    return 'Anthony Ma' in dictionary[min(list(dictionary.keys()))]
 
 def build_output(dictionary):
-    output = ''
+    output = 'Scoreboard: \n'
     count = 1
     sorted_times = sorted(dictionary.items(), key=lambda item: item[1])
     for k, v in sorted_times:
