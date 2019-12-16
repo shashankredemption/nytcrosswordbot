@@ -12,6 +12,7 @@ client = Client(os.environ['USERNAME'], os.environ['PASSWORD'])
 engine = create_engine(os.environ['DATABASE_URL'])
 Session = sessionmaker(bind=engine)
 session = Session()
+now = datetime.now(tz=timezone('US/Eastern'))
 
 def add_new_users(users):
     for user in users:
@@ -40,7 +41,7 @@ def format_time(time):
         return f'0:{timestr}'
 
 def handle_stupid_alex(dictionary):
-    alex_dict = {v: k for k, v in dictionary.items() if v.lower().startswith('alex')}
+    alex_dict = {v[i]: k for k, v in dictionary.items() for i in range(len(v)) if v[i].lower().startswith('alex')}
     if len(alex_dict) != 2:
         return ''
     stupid_alex = max(alex_dict, key=alex_dict.get)
@@ -53,7 +54,7 @@ def handle_stupid_alex(dictionary):
 
 def handle_winners(dictionary):
     output = ''
-    for winner in [dictionary[min(list(dictionary.keys()))]]:
+    for winner in dictionary[min(list(dictionary.keys()))]:
         winner_row = session.query(User).filter(User.name == winner).one()
         winner_row.win_count += 1
         output += f'{winner_row.name} now has {winner_row.win_count} wins\n'
@@ -61,7 +62,7 @@ def handle_winners(dictionary):
 
 def handle_losers(dictionary):
     output = ''
-    for loser in [dictionary[max(list(dictionary.keys()))]]:
+    for loser in dictionary[max(list(dictionary.keys()))]:
         loser_row = session.query(User).filter(User.name == loser).one()
         loser_row.loss_count += 1
         output += f'{loser_row.name} now has {loser_row.loss_count} losses\n'
@@ -69,7 +70,7 @@ def handle_losers(dictionary):
 
 def handle_dnf(dictionary):
     output = ''
-    dnf_dict = [v for k, v in dictionary.items() if k == float('inf')]
+    dnf_dict = dictionary[float('inf')]
     for dnfer in dnf_dict:
         dnfer_row = session.query(User).filter(User.name == dnfer).one()
         dnfer_row.dnf_count += 1
@@ -77,12 +78,13 @@ def handle_dnf(dictionary):
     return output
 
 def build_output(dictionary):
-    output = 'Scoreboard: \n'
+    output = f'Scoreboard for {now.strftime("%A %m/%d")}: \n'
     count = 1
     sorted_times = sorted(dictionary.items(), key=lambda item: item[0])
-    for k, v in sorted_times:
-        output += f'{count}. {v} @ {format_time(k)} \n'
-        count += 1
+    for key, values in sorted_times:
+        for name in values:
+            output += f'{count}. {name} @ {format_time(key)} \n'
+        count += len(values)
     output += '\n'
     output += handle_winners(dictionary)
     output += handle_losers(dictionary)
@@ -92,24 +94,30 @@ def build_output(dictionary):
     session.commit()
     return output
 
-messages = client.fetchThreadMessages(os.environ['THREAD_ID'], limit=200)
-messages.reverse()
-day = datetime.now(tz=timezone('US/Eastern')) - timedelta(days=1)
-weekday = day.weekday()
-if weekday == 5 or weekday == 6:
-    release_time = day.replace(hour=18, minute=0, second=0).timetuple()
-else:
-    release_time = day.replace(hour=22, minute=0, second=0).timetuple()
-release_time = mktime(release_time)
-messages = filter(lambda x: int(x.timestamp[:10]) > release_time, messages)
-time_dict = {}
-for message in messages:
-    time = parse_message(message.text)
-    if time:
-        time_dict[message.author] = time
-user_dict = {}
-users = list(client.fetchUserInfo(*list(time_dict.keys())).values())
-add_new_users(users)
-for user in users:
-    user_dict[time_dict[user.uid]] = user.name
-client.send(Message(text=build_output(user_dict)), thread_id=os.environ['SEND_THREAD_ID'], thread_type=ThreadType.GROUP)
+def main():
+    messages = client.fetchThreadMessages(os.environ['THREAD_ID'], limit=200)
+    messages.reverse()
+    day = now - timedelta(days=1)
+    weekday = day.weekday()
+    if weekday == 5 or weekday == 6:
+        release_time = day.replace(hour=18, minute=0, second=0).timetuple()
+    else:
+        release_time = day.replace(hour=22, minute=0, second=0).timetuple()
+    release_time = mktime(release_time)
+    messages = filter(lambda x: int(x.timestamp[:10]) > release_time, messages)
+    time_dict = {}
+    for message in messages:
+        time = parse_message(message.text)
+        if time:
+            time_dict[message.author] = time
+    user_dict = {}
+    users = list(client.fetchUserInfo(*list(time_dict.keys())).values())
+    add_new_users(users)
+    for user in users:
+        if time_dict[user.uid] in user_dict:
+            user_dict[time_dict[user.uid]].append(user.name)
+        else:
+            user_dict[time_dict[user.uid]] = [user.name]
+    client.send(Message(text=build_output(user_dict)), thread_id=os.environ['SEND_THREAD_ID'], thread_type=ThreadType.GROUP)
+
+main()
