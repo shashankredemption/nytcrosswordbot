@@ -87,8 +87,8 @@ def build_output(dictionary):
         count += len(values)
     output += '\n'
     output += handle_winners(dictionary)
-    output += handle_losers(dictionary)
-    output += handle_dnf(dictionary)
+    handle_losers(dictionary)
+    handle_dnf(dictionary)
     output += handle_stupid_alex(dictionary)
     # output += f'Did Tony Ma Win? {"Yes :(" if handle_tony(dictionary) else "NO! :D"} \n'
     session.commit()
