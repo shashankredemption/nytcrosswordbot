@@ -18,12 +18,12 @@ depends_on = None
 def upgrade():
     op.create_table(
         'user',
-        sa.Column('id', sa.Integer, primary_key=True),
+        sa.Column('id', sa.BigInteger, primary_key=True),
         sa.Column('name', sa.String()),
         sa.Column('win_count', sa.Integer),
         sa.Column('loss_count', sa.Integer),
         sa.Column('dnf_count', sa.Integer),
-        sa.Column('idiot_alex_count', sa.Integer))
+        sa.Column('stupid_alex_count', sa.Integer))
 
 def downgrade():
     op.drop_table('user')
