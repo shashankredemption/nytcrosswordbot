@@ -47,7 +47,7 @@ def handle_stupid_alex(dictionary):
     stupid_alex = max(alex_dict, key=alex_dict.get)
     stupid_alex_row = session.query(User).filter(User.name == stupid_alex).one()
     stupid_alex_row.stupid_alex_count += 1
-    return f'Today\'s stupid_alex Alex is {stupid_alex}. They have been Stupid Alex {stupid_alex_row.stupid_alex_count} times.'
+    return f'Today\'s Stupid Alex is {stupid_alex}'
 
 # def handle_tony(dictionary):
 #     return 'Anthony Ma' in dictionary[min(list(dictionary.keys()))]
