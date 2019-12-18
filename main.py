@@ -9,7 +9,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 client = Client(os.environ['USERNAME'], os.environ['PASSWORD'], session_cookies=os.environ['SESSION_COOKIES'])
-os.environ['SESSION_COOKIES'] = client.getSession()
+os.environ['SESSION_COOKIES'] = str(client.getSession())
 engine = create_engine(os.environ['DATABASE_URL'])
 Session = sessionmaker(bind=engine)
 session = Session()
