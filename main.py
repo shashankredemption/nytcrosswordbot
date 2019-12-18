@@ -104,7 +104,7 @@ def main():
         release_time = day.replace(hour=18, minute=0, second=0).timetuple()
     else:
         release_time = day.replace(hour=22, minute=0, second=0).timetuple()
-    if now.weekday() == 0 or now.weekday() == 6:
+    if now.weekday() == 5 or now.weekday() == 6:
         end_time = now.replace(hour=18, minute=0, second=0).timetuple()
     else:
         end_time = now.replace(hour=22, minute=0, second=0).timetuple()
