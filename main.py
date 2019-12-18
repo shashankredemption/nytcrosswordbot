@@ -93,7 +93,6 @@ def build_output(dictionary):
     handle_dnf(dictionary)
     output += handle_stupid_alex(dictionary)
     # output += f'Did Tony Ma Win? {"Yes :(" if handle_tony(dictionary) else "NO! :D"} \n'
-    session.commit()
     return output
 
 def main():
@@ -125,8 +124,10 @@ def main():
             user_dict[time_dict[user.uid]].append(user.name)
         else:
             user_dict[time_dict[user.uid]] = [user.name]
-    print('RAN')
-    if sys.argv[1] == 'PROD':
-        client.send(Message(text=build_output(user_dict)), thread_id=os.environ['SEND_THREAD_ID'], thread_type=ThreadType.GROUP)
+    output = build_output(user_dict)
+    print(output)
+    if len(sys.argv) > 1 and sys.argv[1] == 'PROD':
+        session.commit()
+        client.send(Message(text=output), thread_id=os.environ['SEND_THREAD_ID'], thread_type=ThreadType.GROUP)
 
 main()
