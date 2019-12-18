@@ -8,7 +8,8 @@ from fbchat.models import Message, ThreadType
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-client = Client(os.environ['USERNAME'], os.environ['PASSWORD'])
+client = Client(os.environ['USERNAME'], os.environ['PASSWORD'], session_cookies=os.environ['SESSION_COOKIES'])
+os.environ['SESSION_COOKIES'] = client.getSession()
 engine = create_engine(os.environ['DATABASE_URL'])
 Session = sessionmaker(bind=engine)
 session = Session()
@@ -103,8 +104,13 @@ def main():
         release_time = day.replace(hour=18, minute=0, second=0).timetuple()
     else:
         release_time = day.replace(hour=22, minute=0, second=0).timetuple()
+    if now.weekday() == 0 or now.weekday() == 6:
+        end_time = now.replace(hour=18, minute=0, second=0).timetuple()
+    else:
+        end_time = now.replace(hour=22, minute=0, second=0).timetuple()
     release_time = mktime(release_time)
-    messages = filter(lambda x: int(x.timestamp[:10]) > release_time, messages)
+    end_time = mktime(end_time)
+    messages = filter(lambda x: int(x.timestamp[:10]) > release_time and int(x.timestamp[:10]) < end_time, messages)
     time_dict = {}
     for message in messages:
         time = parse_message(message.text)
