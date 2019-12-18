@@ -1,4 +1,5 @@
 import os
+import sys
 from time import mktime
 from datetime import datetime, timedelta
 from pytz import timezone
@@ -124,6 +125,8 @@ def main():
             user_dict[time_dict[user.uid]].append(user.name)
         else:
             user_dict[time_dict[user.uid]] = [user.name]
-    client.send(Message(text=build_output(user_dict)), thread_id=os.environ['SEND_THREAD_ID'], thread_type=ThreadType.GROUP)
+    print('RAN')
+    if sys.argv[1] == 'PROD':
+        client.send(Message(text=build_output(user_dict)), thread_id=os.environ['SEND_THREAD_ID'], thread_type=ThreadType.GROUP)
 
 main()
