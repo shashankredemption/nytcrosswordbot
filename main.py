@@ -1,5 +1,6 @@
 import os
 import sys
+import random
 from time import mktime
 from datetime import datetime, timedelta
 from pytz import timezone
@@ -128,5 +129,6 @@ def main():
     if len(sys.argv) > 1 and sys.argv[1] == 'PROD':
         session.commit()
         client.send(Message(text=output), thread_id=os.environ['SEND_THREAD_ID'], thread_type=ThreadType.GROUP)
+        time.sleep(random.randrange(120,300))
         client.logout()
 main()
