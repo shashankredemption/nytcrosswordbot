@@ -9,8 +9,7 @@ from fbchat.models import Message, ThreadType
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-client = Client(os.environ['USERNAME'], os.environ['PASSWORD'], session_cookies=os.environ['SESSION_COOKIES'])
-os.environ['SESSION_COOKIES'] = str(client.getSession())
+client = Client(os.environ['USERNAME'], os.environ['PASSWORD'])
 engine = create_engine(os.environ['DATABASE_URL'])
 Session = sessionmaker(bind=engine)
 session = Session()
@@ -129,5 +128,5 @@ def main():
     if len(sys.argv) > 1 and sys.argv[1] == 'PROD':
         session.commit()
         client.send(Message(text=output), thread_id=os.environ['SEND_THREAD_ID'], thread_type=ThreadType.GROUP)
-
+        client.logout()
 main()
