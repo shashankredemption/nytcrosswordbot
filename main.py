@@ -10,7 +10,7 @@ from fbchat.models import Message, ThreadType
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-client = Client(os.environ['USERNAME'], os.environ['PASSWORD'])
+client = Client(os.environ['NYT_USER'], os.environ['NYT_PASS'])
 engine = create_engine(os.environ['DATABASE_URL'])
 Session = sessionmaker(bind=engine)
 session = Session()
@@ -113,9 +113,9 @@ def main():
     messages = filter(lambda x: int(x.timestamp[:10]) > release_time and int(x.timestamp[:10]) < end_time, messages)
     time_dict = {}
     for message in messages:
-        time = parse_message(message.text)
-        if time:
-            time_dict[message.author] = time
+        parsed_time = parse_message(message.text)
+        if parsed_time:
+            time_dict[message.author] = parsed_time
     user_dict = {}
     users = list(client.fetchUserInfo(*list(time_dict.keys())).values())
     add_new_users(users)
