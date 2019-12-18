@@ -72,7 +72,7 @@ def handle_losers(dictionary):
 
 def handle_dnf(dictionary):
     output = ''
-    dnf_dict = dictionary.get(float('inf'))
+    dnf_dict = dictionary.get(float('inf'), [])
     for dnfer in dnf_dict:
         dnfer_row = session.query(User).filter(User.name == dnfer).one()
         dnfer_row.dnf_count += 1
