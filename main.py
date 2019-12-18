@@ -37,6 +37,8 @@ def format_time(time):
     timestr = str(time)
     if time == float('inf'):
         return 'dnf'
+    elif len(timestr) == 1:
+        return f'0:0{timestr}'
     elif len(timestr) > 2:
         return f'{timestr[:-2]}:{timestr[-2:]}'
     else:
@@ -126,9 +128,9 @@ def main():
             user_dict[time_dict[user.uid]] = [user.name]
     output = build_output(user_dict)
     print(output)
-    if len(sys.argv) > 1 and sys.argv[1] == 'PROD':
-        session.commit()
+    if '--send' in sys.argv:
         client.send(Message(text=output), thread_id=os.environ['SEND_THREAD_ID'], thread_type=ThreadType.GROUP)
-        time.sleep(random.randrange(120,300))
-        client.logout()
+    if '--commit' in sys.argv:
+        session.commit()
+
 main()
