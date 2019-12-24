@@ -105,9 +105,7 @@ def build_output(uid_to_time, users):
     # output += f'Did Tony Ma Win? {"Yes :(" if handle_tony(dictionary) else "NO! :D"} \n'
     return output
 
-def main():
-    messages = client.fetchThreadMessages(os.environ['THREAD_ID'], limit=200)
-    messages.reverse()
+def get_times():
     day = now - timedelta(days=1)
     weekday = day.weekday()
     if weekday == 5 or weekday == 6:
@@ -120,7 +118,17 @@ def main():
         end_time = now.replace(hour=22, minute=0, second=0).timetuple()
     release_time = mktime(release_time)
     end_time = mktime(end_time)
+
+    return release_time, end_time
+
+def main():
+    messages = client.fetchThreadMessages(os.environ['THREAD_ID'], limit=200)
+    messages.reverse()
+
+    # get times and filter
+    release_time, end_time = get_times()
     messages = filter(lambda x: int(x.timestamp[:10]) > release_time and int(x.timestamp[:10]) < end_time, messages)
+<<<<<<< HEAD
     uid_to_time = {}
     for message in messages:
         parsed_time = parse_message(message.text)
@@ -129,6 +137,28 @@ def main():
     users = list(client.fetchUserInfo(*list(uid_to_time.keys())).values())
     add_new_users(users)
     output = build_output(uid_to_time, users)
+=======
+
+    # parse times
+    time_dict = {}
+    for message in messages:
+        parsed_time = parse_message(message.text)
+        if parsed_time:
+            time_dict[message.author] = parsed_time
+    
+    # map times to users
+    user_dict = {}
+    users = list(client.fetchUserInfo(*list(time_dict.keys())).values())
+    add_new_users(users)
+    for user in users:
+        if time_dict[user.uid] in user_dict:
+            user_dict[time_dict[user.uid]].append(user.name)
+        else:
+            user_dict[time_dict[user.uid]] = [user.name]
+    
+    # build output
+    output = build_output(user_dict)
+>>>>>>> 5af4cae... refactor: clean up time calculation into function
     print(output)
     if '--send' in sys.argv:
         client.send(Message(text=output), thread_id=os.environ['SEND_THREAD_ID'], thread_type=ThreadType.GROUP)
