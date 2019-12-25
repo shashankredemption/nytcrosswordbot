@@ -21,7 +21,7 @@ def add_new_users(users):
         try:
             session.query(User).filter(User.name == user.name).one()
         except:
-            session.add(User(id=user.uid, name=user.name, win_count=0, loss_count=0, dnf_count=0, stupid_alex_count=0))
+            session.add(User(id=user.uid, name=user.name, win_count=0, loss_count=0, dnf_count=0, stupid_alex_count=0, lame_count=0))
             session.commit()
 
 def parse_message(message):
@@ -81,6 +81,27 @@ def handle_dnf(dictionary):
         output += f'{dnfer_row.name} now has {dnfer_row.dnf_count} dnfs\n'
     return output
 
+LAME_THRESHOLD = 7
+def handle_lames(name_to_time):
+    # pull up all users
+    # lames are users that are in set of all users
+    # but not in (input) dictionary
+    participants = name_to_time.keys()
+    lames = []
+    for user in session.query(User).all():
+        # if they particpated, reset their lame count
+        # otherwise, add 1 lame
+        if user.name in participants:
+            user.lame_count = 0
+        else:
+            user.lame_count += 1
+            # check if they've reached the lame threshold
+            # add them to the output if so
+            if user.lame_count > LAME_THRESHOLD:
+                lames.append(user.name)
+    output = f"Prepare 4 🦵: {', '.join(lames)}\n"
+    return output
+
 def build_output(uid_to_time, users):
     time_to_names = {}
     name_to_time = {}
@@ -90,6 +111,7 @@ def build_output(uid_to_time, users):
         else:
             time_to_names[uid_to_time[user.uid]] = [user.name]
         name_to_time[user.name] = uid_to_time[user.uid]
+
     output = f'Scoreboard for {now.strftime("%A %m/%d")}: \n'
     count = 1
     sorted_times = sorted(time_to_names.items(), key=lambda item: item[0])
@@ -103,11 +125,10 @@ def build_output(uid_to_time, users):
     handle_dnf(time_to_names)
     output += handle_stupid_alex(name_to_time)
     # output += f'Did Tony Ma Win? {"Yes :(" if handle_tony(dictionary) else "NO! :D"} \n'
+    output += handle_lames(name_to_time)
     return output
 
-def main():
-    messages = client.fetchThreadMessages(os.environ['THREAD_ID'], limit=200)
-    messages.reverse()
+def get_times():
     day = now - timedelta(days=1)
     weekday = day.weekday()
     if weekday == 5 or weekday == 6:
@@ -120,6 +141,15 @@ def main():
         end_time = now.replace(hour=22, minute=0, second=0).timetuple()
     release_time = mktime(release_time)
     end_time = mktime(end_time)
+
+    return release_time, end_time
+
+def main():
+    messages = client.fetchThreadMessages(os.environ['THREAD_ID'], limit=200)
+    messages.reverse()
+
+    # get times and filter
+    release_time, end_time = get_times()
     messages = filter(lambda x: int(x.timestamp[:10]) > release_time and int(x.timestamp[:10]) < end_time, messages)
     uid_to_time = {}
     for message in messages:

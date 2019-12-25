@@ -11,3 +11,5 @@ class User(Base):
     loss_count = Column(Integer)
     dnf_count = Column(Integer)
     stupid_alex_count = Column(Integer)
+    # counts how many times someone didn't participate
+    lame_count = Column(Integer, default=0)
