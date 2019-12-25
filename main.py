@@ -81,12 +81,12 @@ def handle_dnf(dictionary):
         output += f'{dnfer_row.name} now has {dnfer_row.dnf_count} dnfs\n'
     return output
 
-LAME_THRESHOLD = 5
-def handle_lames(dictionary):
+LAME_THRESHOLD = 7
+def handle_lames(name_to_time):
     # pull up all users
     # lames are users that are in set of all users
     # but not in (input) dictionary
-    participants = dictionary.values()
+    participants = name_to_time.keys()
     lames = []
     for user in session.query(User).all():
         # if they particpated, reset their lame count
@@ -99,7 +99,7 @@ def handle_lames(dictionary):
             # add them to the output if so
             if user.lame_count > LAME_THRESHOLD:
                 lames.append(user.name)
-    output = f"Prepare to be 🦵: {', '.join(lames)} \n"
+    output = f"Prepare 4 🦵: {', '.join(lames)}\n"
     return output
 
 def build_output(uid_to_time, users):
@@ -125,7 +125,7 @@ def build_output(uid_to_time, users):
     handle_dnf(time_to_names)
     output += handle_stupid_alex(name_to_time)
     # output += f'Did Tony Ma Win? {"Yes :(" if handle_tony(dictionary) else "NO! :D"} \n'
-    output += handle_lames(dictionary)
+    output += handle_lames(name_to_time)
     return output
 
 def get_times():
@@ -151,7 +151,6 @@ def main():
     # get times and filter
     release_time, end_time = get_times()
     messages = filter(lambda x: int(x.timestamp[:10]) > release_time and int(x.timestamp[:10]) < end_time, messages)
-<<<<<<< HEAD
     uid_to_time = {}
     for message in messages:
         parsed_time = parse_message(message.text)
@@ -160,28 +159,6 @@ def main():
     users = list(client.fetchUserInfo(*list(uid_to_time.keys())).values())
     add_new_users(users)
     output = build_output(uid_to_time, users)
-=======
-
-    # parse times
-    time_dict = {}
-    for message in messages:
-        parsed_time = parse_message(message.text)
-        if parsed_time:
-            time_dict[message.author] = parsed_time
-    
-    # map times to users
-    user_dict = {}
-    users = list(client.fetchUserInfo(*list(time_dict.keys())).values())
-    add_new_users(users)
-    for user in users:
-        if time_dict[user.uid] in user_dict:
-            user_dict[time_dict[user.uid]].append(user.name)
-        else:
-            user_dict[time_dict[user.uid]] = [user.name]
-    
-    # build output
-    output = build_output(user_dict)
->>>>>>> 5af4cae... refactor: clean up time calculation into function
     print(output)
     if '--send' in sys.argv:
         client.send(Message(text=output), thread_id=os.environ['SEND_THREAD_ID'], thread_type=ThreadType.GROUP)
