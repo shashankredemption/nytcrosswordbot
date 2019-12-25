@@ -30,7 +30,7 @@ def parse_message(message):
             return float('inf')
         message = message.replace(":", "")
         return int(message.split()[0])
-    except (ValueError, AttributeError) as e:
+    except (ValueError, AttributeError, IndexError) as e:
         return False
 
 def format_time(time):
