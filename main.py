@@ -29,7 +29,7 @@ def parse_message(message):
         if 'dnf' in message.lower().split()[0]:
             return float('inf')
         message = message.replace(":", "")
-        return int(message)
+        return int(message.split()[0])
     except (ValueError, AttributeError) as e:
         return False
 
@@ -45,7 +45,7 @@ def format_time(time):
         return f'0:{timestr}'
 
 def handle_stupid_alex(dictionary):
-    alex_dict = {v[i]: k for k, v in dictionary.items() for i in range(len(v)) if v[i].lower().startswith('alex')}
+    alex_dict = {k: v for k, v in dictionary.items() if k.lower().startswith('alex')}
     if len(alex_dict) != 2:
         return ''
     stupid_alex = max(alex_dict, key=alex_dict.get)
@@ -81,19 +81,27 @@ def handle_dnf(dictionary):
         output += f'{dnfer_row.name} now has {dnfer_row.dnf_count} dnfs\n'
     return output
 
-def build_output(dictionary):
+def build_output(uid_to_time, users):
+    time_to_names = {}
+    name_to_time = {}
+    for user in users:
+        if uid_to_time[user.uid] in time_to_names:
+            time_to_names[uid_to_time[user.uid]].append(user.name)
+        else:
+            time_to_names[uid_to_time[user.uid]] = [user.name]
+        name_to_time[user.name] = uid_to_time[user.uid]
     output = f'Scoreboard for {now.strftime("%A %m/%d")}: \n'
     count = 1
-    sorted_times = sorted(dictionary.items(), key=lambda item: item[0])
+    sorted_times = sorted(time_to_names.items(), key=lambda item: item[0])
     for key, values in sorted_times:
         for name in values:
             output += f'{count}. {name} @ {format_time(key)} \n'
         count += len(values)
     output += '\n'
-    output += handle_winners(dictionary)
-    handle_losers(dictionary)
-    handle_dnf(dictionary)
-    output += handle_stupid_alex(dictionary)
+    output += handle_winners(time_to_names)
+    handle_losers(time_to_names)
+    handle_dnf(time_to_names)
+    output += handle_stupid_alex(name_to_time)
     # output += f'Did Tony Ma Win? {"Yes :(" if handle_tony(dictionary) else "NO! :D"} \n'
     return output
 
@@ -113,20 +121,14 @@ def main():
     release_time = mktime(release_time)
     end_time = mktime(end_time)
     messages = filter(lambda x: int(x.timestamp[:10]) > release_time and int(x.timestamp[:10]) < end_time, messages)
-    time_dict = {}
+    uid_to_time = {}
     for message in messages:
         parsed_time = parse_message(message.text)
         if parsed_time:
-            time_dict[message.author] = parsed_time
-    user_dict = {}
-    users = list(client.fetchUserInfo(*list(time_dict.keys())).values())
+            uid_to_time[message.author] = parsed_time
+    users = list(client.fetchUserInfo(*list(uid_to_time.keys())).values())
     add_new_users(users)
-    for user in users:
-        if time_dict[user.uid] in user_dict:
-            user_dict[time_dict[user.uid]].append(user.name)
-        else:
-            user_dict[time_dict[user.uid]] = [user.name]
-    output = build_output(user_dict)
+    output = build_output(uid_to_time, users)
     print(output)
     if '--send' in sys.argv:
         client.send(Message(text=output), thread_id=os.environ['SEND_THREAD_ID'], thread_type=ThreadType.GROUP)
