@@ -51,7 +51,7 @@ def handle_stupid_alex(dictionary):
     stupid_alex = max(alex_dict, key=alex_dict.get)
     stupid_alex_row = session.query(User).filter(User.name == stupid_alex).one()
     stupid_alex_row.stupid_alex_count += 1
-    return f'Today\'s Stupid Alex is {stupid_alex}'
+    return f'Today\'s Stupid Alex is {stupid_alex}\n'
 
 # def handle_tony(dictionary):
 #     return 'Anthony Ma' in dictionary[min(list(dictionary.keys()))]
@@ -91,7 +91,7 @@ def handle_lames(name_to_time):
     for user in session.query(User).all():
         # if they particpated, reset their lame count
         # otherwise, add 1 lame
-        if user.name in participants:
+        if user.name in participants or user.lame_count == None:
             user.lame_count = 0
         else:
             user.lame_count += 1
@@ -99,6 +99,8 @@ def handle_lames(name_to_time):
             # add them to the output if so
             if user.lame_count > LAME_THRESHOLD:
                 lames.append(user.name)
+    if not lames:
+        return ''
     output = f"Prepare 4 🦵: {', '.join(lames)}\n"
     return output
 
