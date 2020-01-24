@@ -45,7 +45,7 @@ def format_time(time):
         return f'0:{timestr}'
 
 def handle_stupid_alex(dictionary):
-    alex_dict = {k: v for k, v in dictionary.items() if k.lower().startswith('alex')}
+    alex_dict = {k: v for k, v in list(dictionary.items())[::-1] if k.lower().startswith('alex')}
     if len(alex_dict) != 2:
         return ''
     stupid_alex = max(alex_dict, key=alex_dict.get)
