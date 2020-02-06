@@ -53,6 +53,16 @@ def handle_stupid_alex(dictionary):
     stupid_alex_row.stupid_alex_count += 1
     return f'Today\'s Stupid Alex is {stupid_alex}\n'
 
+def handle_arcadia(dictionary):
+    apaches = ['Anthony Ma', 'Katelyn Yu']
+    apache_dict = {k: v for k, v in list(dictionary.items())[::-1] if k in apaches}
+    if len(apache_dict) != 2:
+        return ''
+    top_apache = min(apache_dict, key=apache_dict.get)
+    top_apache_row = session.query(User).filter(User.name == top_apache).one()
+    top_apache_row.top_apache_count += 1
+    return f'Today\'s Top Arcadian is {top_apache}\n'
+
 # def handle_tony(dictionary):
 #     return 'Anthony Ma' in dictionary[min(list(dictionary.keys()))]
 
@@ -126,6 +136,7 @@ def build_output(uid_to_time, users):
     handle_losers(time_to_names)
     handle_dnf(time_to_names)
     output += handle_stupid_alex(name_to_time)
+    output += handle_arcadia(name_to_time)
     # output += f'Did Tony Ma Win? {"Yes :(" if handle_tony(dictionary) else "NO! :D"} \n'
     output += handle_lames(name_to_time)
     return output
