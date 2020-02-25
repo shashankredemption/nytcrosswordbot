@@ -55,7 +55,7 @@ def handle_stupid_alex(dictionary):
 
 def handle_arcadia(dictionary):
     apaches = ['Anthony Ma', 'Katelyn Yu']
-    apache_dict = {k: v for k, v in list(dictionary.items())[::-1] if k in apaches}
+    apache_dict = {k: v for k, v in list(dictionary.items()) if k in apaches}
     if len(apache_dict) != 2:
         return ''
     top_apache = min(apache_dict, key=apache_dict.get)
