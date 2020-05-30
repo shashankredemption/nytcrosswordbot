@@ -25,6 +25,15 @@ Session = sessionmaker(bind=engine)
 session = Session()
 now = datetime.now(tz=timezone('US/Eastern'))
 
+def update_users_that_left(users):
+    chat_usernames = [user.name for user in users]
+    users_in_db = session.query(User).all()
+    # get all the users in the db that are no longer in chat
+    users_that_left = [db_user if db_user.name not in chat_usernames for db_user in users_in_db]
+    # delete users
+    session.delete(users_that_left)
+    session.commit()
+
 def add_new_users(users):
     for user in users:
         try:
@@ -179,6 +188,7 @@ def main():
         if parsed_time:
             uid_to_time[message.author] = parsed_time
     users = list(client.fetchUserInfo(*list(uid_to_time.keys())).values())
+    update_users_that_left(users)
     add_new_users(users)
     output = build_output(uid_to_time, users)
     print(output)
