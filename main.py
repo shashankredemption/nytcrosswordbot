@@ -107,7 +107,6 @@ def handle_lames(name_to_time, members):
             user.lame_count += 1
             # check if they've reached the lame threshold
             # add them to the output if so
-            print(members)
             if user.lame_count > LAME_THRESHOLD and user.name in members:
                 lames.append(user.name)
     if not lames:
