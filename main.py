@@ -1,6 +1,7 @@
 import os
-import sys
+import json
 import random
+import sys
 from time import mktime
 from datetime import datetime, timedelta
 from pytz import timezone
@@ -10,8 +11,16 @@ from fbchat.models import Message, ThreadType
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-client = Client(os.environ['NYT_USER'], os.environ['NYT_PASS'])
+cookies = {}
+try:
+    with open('session.json', 'r') as f:
+        cookies = json.load(f)
+except:
+    pass
+client = Client(os.environ['NYT_USER'], os.environ['NYT_PASS'], session_cookies=cookies)
 engine = create_engine(os.environ['DATABASE_URL'])
+with open('session.json', 'w') as f:
+    json.dump(client.getSession(), f)
 Session = sessionmaker(bind=engine)
 session = Session()
 now = datetime.now(tz=timezone('US/Eastern'))
@@ -91,7 +100,7 @@ def handle_dnf(dictionary):
         output += f'{dnfer_row.name} now has {dnfer_row.dnf_count} dnfs\n'
     return output
 
-LAME_THRESHOLD = 7
+LAME_THRESHOLD = 6
 def handle_lames(name_to_time, members):
     # pull up all users
     # lames are users that are in set of all users
