@@ -92,7 +92,7 @@ def handle_dnf(dictionary):
     return output
 
 LAME_THRESHOLD = 7
-def handle_lames(name_to_time):
+def handle_lames(name_to_time, members):
     # pull up all users
     # lames are users that are in set of all users
     # but not in (input) dictionary
@@ -107,22 +107,23 @@ def handle_lames(name_to_time):
             user.lame_count += 1
             # check if they've reached the lame threshold
             # add them to the output if so
-            if user.lame_count > LAME_THRESHOLD:
+            print(members)
+            if user.lame_count > LAME_THRESHOLD and user.name in members:
                 lames.append(user.name)
     if not lames:
         return ''
     output = f"Prepare 4 🦵: {', '.join(lames)}\n"
     return output
 
-def build_output(uid_to_time, users):
+def build_output(uid_to_time, participants, members):
     time_to_names = {}
     name_to_time = {}
-    for user in users:
-        if uid_to_time[user.uid] in time_to_names:
-            time_to_names[uid_to_time[user.uid]].append(user.name)
+    for participant in participants:
+        if uid_to_time[participant.uid] in time_to_names:
+            time_to_names[uid_to_time[participant.uid]].append(participant.name)
         else:
-            time_to_names[uid_to_time[user.uid]] = [user.name]
-        name_to_time[user.name] = uid_to_time[user.uid]
+            time_to_names[uid_to_time[participant.uid]] = [participant.name]
+        name_to_time[participant.name] = uid_to_time[participant.uid]
 
     output = f'Scoreboard for {now.strftime("%A %m/%d")}: \n'
     count = 1
@@ -138,7 +139,7 @@ def build_output(uid_to_time, users):
     output += handle_stupid_alex(name_to_time)
     output += handle_arcadia(name_to_time)
     # output += f'Did Tony Ma Win? {"Yes :(" if handle_tony(dictionary) else "NO! :D"} \n'
-    output += handle_lames(name_to_time)
+    output += handle_lames(name_to_time, members)
     return output
 
 def get_times():
@@ -160,6 +161,8 @@ def get_times():
 def main():
     messages = client.fetchThreadMessages(os.environ['THREAD_ID'], limit=200)
     messages.reverse()
+    thread = client.fetchThreadInfo(os.environ['THREAD_ID'])[os.environ['THREAD_ID']]
+    members = [member.name for member in client.fetchAllUsersFromThreads([thread])]
 
     # get times and filter
     release_time, end_time = get_times()
@@ -169,9 +172,9 @@ def main():
         parsed_time = parse_message(message.text)
         if parsed_time:
             uid_to_time[message.author] = parsed_time
-    users = list(client.fetchUserInfo(*list(uid_to_time.keys())).values())
-    add_new_users(users)
-    output = build_output(uid_to_time, users)
+    participants = list(client.fetchUserInfo(*list(uid_to_time.keys())).values())
+    add_new_users(participants)
+    output = build_output(uid_to_time, participants, members)
     print(output)
     if '--send' in sys.argv:
         client.send(Message(text=output), thread_id=os.environ['SEND_THREAD_ID'], thread_type=ThreadType.GROUP)
