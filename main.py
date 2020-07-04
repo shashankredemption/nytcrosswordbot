@@ -37,7 +37,7 @@ def parse_message(message):
     try:
         if 'dnf' in message.lower().split()[0]:
             return float('inf')
-        message = message.replace(":", "")
+        message = message.replace(":", "").replace("*", "")
         return int(message.split()[0])
     except (ValueError, AttributeError, IndexError) as e:
         return False
@@ -100,13 +100,14 @@ def handle_dnf(dictionary):
         output += f'{dnfer_row.name} now has {dnfer_row.dnf_count} dnfs\n'
     return output
 
-LAME_THRESHOLD = 6
+LAME_THRESHOLD = 10
 def handle_lames(name_to_time, members):
     # pull up all users
     # lames are users that are in set of all users
     # but not in (input) dictionary
     participants = name_to_time.keys()
     lames = []
+    output = ''
     for user in session.query(User).all():
         # if they particpated, reset their lame count
         # otherwise, add 1 lame
@@ -116,11 +117,13 @@ def handle_lames(name_to_time, members):
             user.lame_count += 1
             # check if they've reached the lame threshold
             # add them to the output if so
-            if user.lame_count > LAME_THRESHOLD and user.name in members:
-                lames.append(user.name)
-    if not lames:
-        return ''
-    output = f"Prepare 4 🦵: {', '.join(lames)}\n"
+            if user.name in members:
+                if user.lame_count > LAME_THRESHOLD:
+                    lames.append(user.name)
+                elif user.lame_count > (LAME_THRESHOLD - 5):
+                    output += f'{user.name}  has {LAME_THRESHOLD - user.lame_count} days til 🦵\n'
+    if lames:
+        output += f"Prepare 4 🦵: {', '.join(lames)}\n"
     return output
 
 def build_output(uid_to_time, participants, members):
