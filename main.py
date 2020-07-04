@@ -11,16 +11,8 @@ from fbchat.models import Message, ThreadType
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-cookies = {}
-try:
-    with open('session.json', 'r') as f:
-        cookies = json.load(f)
-except:
-    pass
 client = Client(os.environ['NYT_USER'], os.environ['NYT_PASS'], session_cookies=cookies)
 engine = create_engine(os.environ['DATABASE_URL'])
-with open('session.json', 'w') as f:
-    json.dump(client.getSession(), f)
 Session = sessionmaker(bind=engine)
 session = Session()
 now = datetime.now(tz=timezone('US/Eastern'))
