@@ -113,7 +113,7 @@ def handle_lames(name_to_time, members):
                 if user.lame_count > LAME_THRESHOLD:
                     lames.append(user.name)
                 elif user.lame_count > (LAME_THRESHOLD - 3):
-                    output += f'{user.name}  has {LAME_THRESHOLD - user.lame_count} days til 🦵\n'
+                    output += f'{user.name} has {LAME_THRESHOLD - user.lame_count} days til 🦵\n'
     if lames:
         output += f"Prepare 4 🦵: {', '.join(lames)}\n"
     return output
