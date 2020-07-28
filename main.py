@@ -55,9 +55,9 @@ def handle_stupid_alex(dictionary):
     return f'Today\'s Stupid Alex is {stupid_alex}\n'
 
 def handle_arcadia(dictionary):
-    apaches = ['Anthony Ma', 'Katelyn Yu']
+    apaches = ['Anthony Ma', 'Katelyn Yu', 'Michael Chien']
     apache_dict = {k: v for k, v in list(dictionary.items()) if k in apaches}
-    if len(apache_dict) != 2:
+    if len(apache_dict) <= 1:
         return ''
     top_apache = min(apache_dict, key=apache_dict.get)
     top_apache_row = session.query(User).filter(User.name == top_apache).one()
