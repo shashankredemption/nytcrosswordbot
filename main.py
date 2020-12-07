@@ -2,27 +2,24 @@ import os
 import json
 import random
 import sys
+import fbchat
 from time import mktime
 from datetime import datetime, timedelta
 from pytz import timezone
 from models import User
-from fbchat import Client
-from fbchat.models import Message, ThreadType
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-client = Client(os.environ['NYT_USER'], os.environ['NYT_PASS'], session_cookies=cookies)
 engine = create_engine(os.environ['DATABASE_URL'])
 Session = sessionmaker(bind=engine)
 session = Session()
-now = datetime.now(tz=timezone('US/Eastern'))
 
 def add_new_users(users):
     for user in users:
         try:
-            session.query(User).filter(User.name == user.name).one()
+            session.query(User).filter(User.name == user['name']).one()
         except:
-            session.add(User(id=user.uid, name=user.name, win_count=0, loss_count=0, dnf_count=0, stupid_alex_count=0, lame_count=0))
+            session.add(User(id=user['uid'], name=user['name'], win_count=0, loss_count=0, dnf_count=0, stupid_alex_count=0, lame_count=0))
             session.commit()
 
 def parse_message(message):
@@ -110,9 +107,9 @@ def handle_lames(name_to_time, members):
             # check if they've reached the lame threshold
             # add them to the output if so
             if user.name in members:
-                if user.lame_count > LAME_THRESHOLD:
+                if user.lame_count >= LAME_THRESHOLD:
                     lames.append(user.name)
-                elif user.lame_count > (LAME_THRESHOLD - 3):
+                elif user.lame_count >= (LAME_THRESHOLD - 3):
                     output += f'{user.name} has {LAME_THRESHOLD - user.lame_count} days til 🦵\n'
     if lames:
         output += f"Prepare 4 🦵: {', '.join(lames)}\n"
@@ -122,11 +119,11 @@ def build_output(uid_to_time, participants, members):
     time_to_names = {}
     name_to_time = {}
     for participant in participants:
-        if uid_to_time[participant.uid] in time_to_names:
-            time_to_names[uid_to_time[participant.uid]].append(participant.name)
+        if uid_to_time[participant['uid']] in time_to_names:
+            time_to_names[uid_to_time[participant['uid']]].append(participant['name'])
         else:
-            time_to_names[uid_to_time[participant.uid]] = [participant.name]
-        name_to_time[participant.name] = uid_to_time[participant.uid]
+            time_to_names[uid_to_time[participant['uid']]] = [participant['name']]
+        name_to_time[participant['name']] = uid_to_time[participant['uid']]
 
     output = f'Scoreboard for {now.strftime("%A %m/%d")}: \n'
     count = 1
@@ -149,33 +146,34 @@ def get_times():
     day = now - timedelta(days=1)
     weekday = day.weekday()
     if weekday == 5 or weekday == 6:
-        release_time = day.replace(hour=18, minute=0, second=0).timetuple()
+        release_time = day.replace(hour=EARLY_TIME, minute=0, second=0).timetuple()
     else:
-        release_time = day.replace(hour=22, minute=0, second=0).timetuple()
+        release_time = day.replace(hour=LATE_TIME, minute=0, second=0).timetuple()
     if now.weekday() == 5 or now.weekday() == 6:
-        end_time = now.replace(hour=18, minute=0, second=0).timetuple()
+        end_time = now.replace(hour=EARLY_TIME, minute=0, second=0).timetuple()
     else:
-        end_time = now.replace(hour=22, minute=0, second=0).timetuple()
+        end_time = now.replace(hour=LATE_TIME, minute=0, second=0).timetuple()
     release_time = mktime(release_time)
     end_time = mktime(end_time)
 
     return release_time, end_time
 
 def main():
-    messages = client.fetchThreadMessages(os.environ['THREAD_ID'], limit=200)
+    with open('data.json') as f:
+        data = json.load(f)
+    messages = data['messages']
     messages.reverse()
-    thread = client.fetchThreadInfo(os.environ['THREAD_ID'])[os.environ['THREAD_ID']]
-    members = [member.name for member in client.fetchAllUsersFromThreads([thread])]
-
+    members = [value['name'] for value in data['members'].values()]
     # get times and filter
     release_time, end_time = get_times()
-    messages = filter(lambda x: int(x.timestamp[:10]) > release_time and int(x.timestamp[:10]) < end_time, messages)
+    messages = filter(lambda x: int(x['timestamp'][:10]) > release_time and int(x['timestamp'][:10]) < end_time, messages)
     uid_to_time = {}
     for message in messages:
-        parsed_time = parse_message(message.text)
-        if parsed_time:
-            uid_to_time[message.author] = parsed_time
-    participants = list(client.fetchUserInfo(*list(uid_to_time.keys())).values())
+        if 'body' in message:
+            parsed_time = parse_message(message['body'])
+            if parsed_time:
+                uid_to_time[message['senderID']] = parsed_time
+    participants = [{'name': data['members'][uid]['name'], 'uid': uid } for uid in uid_to_time]
     add_new_users(participants)
     output = build_output(uid_to_time, participants, members)
     print(output)
@@ -184,4 +182,7 @@ def main():
     if '--commit' in sys.argv:
         session.commit()
 
+EARLY_TIME = 17
+LATE_TIME = 21
+now = datetime.now(tz=timezone('US/Central'))
 main()
