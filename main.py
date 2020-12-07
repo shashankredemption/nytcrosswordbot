@@ -177,8 +177,6 @@ def main():
     add_new_users(participants)
     output = build_output(uid_to_time, participants, members)
     print(output)
-    if '--send' in sys.argv:
-        client.send(Message(text=output), thread_id=os.environ['SEND_THREAD_ID'], thread_type=ThreadType.GROUP)
     if '--commit' in sys.argv:
         session.commit()
 
