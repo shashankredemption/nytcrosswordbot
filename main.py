@@ -26,7 +26,7 @@ def parse_message(message):
     try:
         if 'dnf' in message.lower().split()[0]:
             return float('inf')
-        message = message.replace(":", "").replace("*", "")
+        message = message.replace(":", "").replace("*", "").replace("-", "")
         return int(message.split()[0])
     except (ValueError, AttributeError, IndexError) as e:
         return False
@@ -162,7 +162,6 @@ def main():
     with open('data.json') as f:
         data = json.load(f)
     messages = data['messages']
-    messages.reverse()
     members = [value['name'] for value in data['members'].values()]
     # get times and filter
     release_time, end_time = get_times()
@@ -180,7 +179,9 @@ def main():
     if '--commit' in sys.argv:
         session.commit()
 
-EARLY_TIME = 17
-LATE_TIME = 21
-now = datetime.now(tz=timezone('US/Central'))
+EARLY_TIME = 18
+LATE_TIME = 22
+now = datetime.now(tz=timezone('US/Eastern'))
+if '--yesterday' in sys.argv:
+    now = now - timedelta(days=1)
 main()
